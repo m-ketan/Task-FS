@@ -42,6 +42,31 @@ exports.dump = async (req, res, next) => {
   .pipe(writableStream)
 
   fileDataStream.on('close', () => {
-    return res.status(200)
+    res.status(200).end()
   })
+}
+
+exports.fetch = async (req, res, next) => {
+  await connectDB();
+
+  const {start, end} = req.query;
+
+  const qData =  await SensorData.aggregate([
+    { 
+      $match: { 
+        timeStamp: { 
+          $gte: start, 
+          $lt: end 
+        } 
+      } 
+    },
+    {
+      $group: {
+        _id: "$personId",
+        sum: { $sum: "$personId" }
+      }
+    }
+  ])
+
+  res.status(200).send(qData)
 }
